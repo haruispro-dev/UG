@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artists & Producers — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+
+<div class="container" style="padding-top:30px">
+  <div class="section-head">
+    <div><h1>Registered Artists & Producers</h1><div class="sub">Discover the people behind UG.</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm filter-btn active" data-f="all">All</button>
+      <button class="btn btn-ghost btn-sm filter-btn" data-f="artist">Artists</button>
+      <button class="btn btn-ghost btn-sm filter-btn" data-f="producer">Producers</button>
+    </div>
+  </div>
+  <div class="grid" id="peopleGrid"><div class="empty-state"><div class="spinner"></div></div></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script>
+let all = [];
+async function load() {
+  await UGApp.init('artists');
+  const { data } = await sb.from('profiles').select('*, releases:releases(count), beats:beats(count)').in('account_type', ['artist','producer']).order('created_at', { ascending: false });
+  all = data || [];
+  const initial = new URLSearchParams(location.search).get('type');
+  render(initial === 'producer' ? 'producer' : (initial === 'artist' ? 'artist' : 'all'));
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    if (b.dataset.f === (initial || 'all')) { document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); }
+  });
+}
+function render(filter) {
+  const grid = document.getElementById('peopleGrid');
+  const list = filter === 'all' ? all : all.filter(p => p.account_type === filter);
+  if (!list.length) { grid.innerHTML = '<div class="empty-state">No one here yet — be the first to register.</div>'; return; }
+  grid.innerHTML = list.map(p => `
+    <a class="card" href="profile.html?u=${p.username}">
+      <div class="card-cover"><img src="${p.avatar_url || 'assets/default-avatar.svg'}"></div>
+      <div class="card-body">
+        <span class="badge">${p.account_type}</span>
+        <div class="card-title">${UGApp.escapeHtml(p.display_name)}</div>
+        <div class="card-sub">${UGApp.escapeHtml((p.bio||'').slice(0,50))}</div>
+        <div class="card-sub" style="margin-top:6px">${p.releases?.[0]?.count || 0} releases · ${p.beats?.[0]?.count || 0} beats</div>
+      </div>
+    </a>`).join('');
+}
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render(btn.dataset.f);
+});
+load();
+</script>
+</body>
+</html>

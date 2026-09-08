@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="form-card">
+  <h2>UG Admin Access</h2>
+  <div id="formMsg"></div>
+  <form id="loginForm">
+    <div class="field"><label>Admin email</label><input type="email" id="email" required></div>
+    <div class="field"><label>Password</label><input type="password" id="password" required></div>
+    <button class="btn btn-primary btn-block" type="submit" id="submitBtn">Access admin panel</button>
+  </form>
+</div>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('formMsg');
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  try {
+    const { error } = await sb.auth.signInWithPassword({
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value
+    });
+    if (error) throw error;
+    await window.UG.refreshSession();
+    if (!window.UG.profile?.is_admin) {
+      await sb.auth.signOut();
+      throw new Error('This account does not have admin access.');
+    }
+    window.location.href = 'admin.html';
+  } catch (err) {
+    msg.innerHTML = `<div class="msg msg-error">${err.message}</div>`;
+    btn.disabled = false; btn.textContent = 'Access admin panel';
+  }
+});
+</script>
+</body>
+</html>

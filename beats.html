@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beats — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+<div class="container" style="padding-top:30px">
+  <div class="section-head">
+    <div><h1>Beats</h1><div class="sub">Fresh instrumentals from UG producers.</div></div>
+    <a href="upload.html?type=beat" class="btn btn-primary btn-sm">Upload beat</a>
+  </div>
+  <div class="grid" id="grid"><div class="empty-state"><div class="spinner"></div></div></div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script>
+async function load() {
+  await UGApp.init('beats');
+  const { data } = await sb.from('beats').select('*, profiles:producer_id(username, display_name)').order('created_at', { ascending:false });
+  const grid = document.getElementById('grid');
+  if (!data?.length) { grid.innerHTML = '<div class="empty-state">No beats yet. Upload the first one.</div>'; return; }
+  grid.innerHTML = data.map(b => `
+    <a class="card" href="beat.html?id=${b.id}">
+      <div class="card-cover"><img src="${b.cover_url || 'assets/default-cover.svg'}"></div>
+      <div class="card-body"><span class="badge alt">${b.bpm} BPM · ${UGApp.escapeHtml(b.key)}</span><div class="card-title">${UGApp.escapeHtml(b.name)}</div><div class="card-sub">${UGApp.escapeHtml(b.profiles?.display_name||'')}</div></div>
+    </a>`).join('');
+}
+load();
+</script>
+</body>
+</html>

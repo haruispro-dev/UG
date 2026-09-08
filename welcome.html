@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to UG</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+
+<div class="container" style="max-width:640px;padding-top:60px" data-anim>
+  <h1 id="wTitle">Welcome to UNDERGROUND GEO 🎧</h1>
+  <p id="wBody" style="color:var(--text-dim)"></p>
+  <div class="form-card" style="margin:30px 0">
+    <h3>Profile completion</h3>
+    <div style="background:var(--bg-elev-2);border-radius:6px;height:8px;overflow:hidden;margin:10px 0">
+      <div id="progressBar" style="background:var(--accent);height:100%;width:0%;transition:width .4s"></div>
+    </div>
+    <p class="field-hint" id="progressText"></p>
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+      <a href="settings.html" class="btn btn-primary">Complete your profile</a>
+      <a href="index.html" class="btn btn-ghost">Skip for now</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async () => {
+  await UGApp.init();
+  if (!window.UG.user) { window.location.href = 'login.html'; return; }
+  const p = window.UG.profile;
+  const type = p?.account_type;
+
+  const copy = {
+    artist: 'Your artist profile helps people discover your music, your links, and your availability for collaborations.',
+    producer: 'Your producer profile helps people discover your beats, your links, and your availability for collaborations.',
+    member: 'You can customize your profile, follow artists and producers, comment, react, and jump into the community.'
+  };
+  document.getElementById('wBody').textContent = copy[type] || copy.member;
+
+  let filled = 0, total = 4;
+  if (p?.avatar_url) filled++;
+  if (p?.bio) filled++;
+  if (p?.youtube_url || p?.spotify_url || p?.soundcloud_url || p?.beatstars_url) filled++;
+  if (p?.display_name) filled++;
+  const pct = Math.round((filled/total)*100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${pct}% complete`;
+})();
+</script>
+</body>
+</html>

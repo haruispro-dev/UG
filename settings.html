@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+
+<div class="container" style="max-width:640px;padding:40px 20px 80px">
+  <h1>Profile settings</h1>
+  <div id="formMsg"></div>
+
+  <form id="settingsForm">
+    <div class="field" style="display:flex;align-items:center;gap:16px">
+      <img id="avatarPreview" class="avatar" style="width:80px;height:80px" src="assets/default-avatar.svg">
+      <div>
+        <label>Profile picture</label>
+        <input type="file" id="avatarFile" accept="image/*">
+        <button type="button" class="btn btn-ghost btn-sm" id="removeAvatarBtn" style="margin-top:6px">Remove picture</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Display name</label><input type="text" id="displayName"></div>
+    <div class="field"><label>Bio</label><textarea id="bio" rows="3"></textarea></div>
+
+    <div class="field"><label>YouTube link</label><input type="url" id="youtube_url" placeholder="Optional"></div>
+    <div class="field"><label>Spotify link</label><input type="url" id="spotify_url" placeholder="Optional"></div>
+    <div class="field"><label>SoundCloud link</label><input type="url" id="soundcloud_url" placeholder="Optional"></div>
+    <div class="field"><label>Instagram link</label><input type="url" id="instagram_url" placeholder="Optional"></div>
+    <div class="field"><label>TikTok link</label><input type="url" id="tiktok_url" placeholder="Optional"></div>
+    <div class="field"><label>Discord username</label><input type="text" id="discord_username" placeholder="Optional"></div>
+
+    <div id="producerFields" style="display:none">
+      <div class="field"><label>BeatStars link</label><input type="url" id="beatstars_url" placeholder="Optional"></div>
+    </div>
+
+    <div class="field">
+      <label>Open to collaboration?</label>
+      <label class="switch"><input type="checkbox" id="collab_availability"><span class="slider"></span></label>
+    </div>
+    <div class="field">
+      <label>Contact preference</label>
+      <select id="contact_preference">
+        <option value="platform">Contact via UG only</option>
+        <option value="discord">Prefer Discord</option>
+        <option value="any">Any method</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary btn-block" type="submit" id="saveBtn">Save changes</button>
+  </form>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script>
+let profile;
+(async () => {
+  const ok = await window.UG.requireLogin();
+  if (!ok) return;
+  await UGApp.init();
+  profile = window.UG.profile;
+
+  document.getElementById('displayName').value = profile.display_name || '';
+  document.getElementById('bio').value = profile.bio || '';
+  document.getElementById('youtube_url').value = profile.youtube_url || '';
+  document.getElementById('spotify_url').value = profile.spotify_url || '';
+  document.getElementById('soundcloud_url').value = profile.soundcloud_url || '';
+  document.getElementById('instagram_url').value = profile.instagram_url || '';
+  document.getElementById('tiktok_url').value = profile.tiktok_url || '';
+  document.getElementById('discord_username').value = profile.discord_username || '';
+  document.getElementById('collab_availability').checked = !!profile.collab_availability;
+  document.getElementById('contact_preference').value = profile.contact_preference || 'platform';
+  if (profile.avatar_url) document.getElementById('avatarPreview').src = profile.avatar_url;
+  if (profile.account_type === 'producer') {
+    document.getElementById('producerFields').style.display = 'block';
+    document.getElementById('beatstars_url').value = profile.beatstars_url || '';
+  }
+})();
+
+document.getElementById('avatarFile').addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (f) document.getElementById('avatarPreview').src = URL.createObjectURL(f);
+});
+
+document.getElementById('removeAvatarBtn').addEventListener('click', async () => {
+  await sb.from('profiles').update({ avatar_url: null }).eq('id', window.UG.user.id);
+  document.getElementById('avatarPreview').src = 'assets/default-avatar.svg';
+});
+
+document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('formMsg');
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    let avatar_url = profile.avatar_url;
+    const file = document.getElementById('avatarFile').files[0];
+    if (file) avatar_url = await UGApp.uploadFile('avatars', file);
+
+    const updates = {
+      display_name: document.getElementById('displayName').value.trim(),
+      bio: document.getElementById('bio').value.trim(),
+      youtube_url: document.getElementById('youtube_url').value.trim() || null,
+      spotify_url: document.getElementById('spotify_url').value.trim() || null,
+      soundcloud_url: document.getElementById('soundcloud_url').value.trim() || null,
+      instagram_url: document.getElementById('instagram_url').value.trim() || null,
+      tiktok_url: document.getElementById('tiktok_url').value.trim() || null,
+      discord_username: document.getElementById('discord_username').value.trim() || null,
+      collab_availability: document.getElementById('collab_availability').checked,
+      contact_preference: document.getElementById('contact_preference').value,
+      avatar_url,
+      profile_complete: true
+    };
+    if (profile.account_type === 'producer') {
+      updates.beatstars_url = document.getElementById('beatstars_url').value.trim() || null;
+    }
+
+    const { error } = await sb.from('profiles').update(updates).eq('id', window.UG.user.id);
+    if (error) throw error;
+    msg.innerHTML = `<div class="msg msg-success">Profile saved.</div>`;
+  } catch (err) {
+    msg.innerHTML = `<div class="msg msg-error">${UGApp.escapeHtml(err.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save changes';
+  }
+});
+</script>
+</body>
+</html>

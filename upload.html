@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+
+<div class="container" style="max-width:560px;padding:30px 20px 80px">
+  <div class="section-head">
+    <h1>Upload</h1>
+    <div style="display:flex;gap:8px" id="typeSwitch">
+      <button class="btn btn-ghost btn-sm" data-type="release">Release</button>
+      <button class="btn btn-ghost btn-sm" data-type="beat">Beat</button>
+      <button class="btn btn-ghost btn-sm" data-type="post">Community post</button>
+    </div>
+  </div>
+  <div id="formMsg"></div>
+  <form id="uploadForm" class="form-card" style="margin:0">
+
+    <div class="field" id="titleField"><label id="titleLabel">Title</label><input type="text" id="title" required></div>
+
+    <div class="field" id="bpmField" style="display:none"><label>BPM</label><input type="number" id="bpm"></div>
+    <div class="field" id="keyField" style="display:none"><label>Key</label><input type="text" id="key" placeholder="e.g. A minor"></div>
+
+    <div class="field" id="categoryField" style="display:none">
+      <label>Post category</label>
+      <select id="category">
+        <option value="discussion">Discussion</option>
+        <option value="music">Music</option>
+        <option value="beat">Beat share</option>
+        <option value="question">Question</option>
+        <option value="announcement">Announcement</option>
+        <option value="collab">Collaboration request</option>
+        <option value="feedback">Feedback request</option>
+      </select>
+    </div>
+
+    <div class="field" id="coverField"><label id="coverLabel">Cover image <span class="field-hint">(optional)</span></label><input type="file" id="coverFile" accept="image/*"></div>
+    <div class="field" id="audioField"><label>Audio file <span class="field-hint">(optional)</span></label><input type="file" id="audioFile" accept="audio/*"></div>
+    <div class="field" id="videoField"><label>Video file <span class="field-hint">(optional)</span></label><input type="file" id="videoFile" accept="video/*"></div>
+    <div class="field"><label>YouTube link <span class="field-hint">(optional)</span></label><input type="url" id="youtubeLink"></div>
+    <div class="field" id="externalField"><label>External link <span class="field-hint">(optional)</span></label><input type="url" id="externalLink"></div>
+    <div class="field" id="descField"><label>Description <span class="field-hint">(optional)</span></label><textarea id="description" rows="3"></textarea></div>
+    <div class="field" id="genreField"><label>Genre <span class="field-hint">(optional)</span></label><input type="text" id="genre"></div>
+    <div class="field" id="locationField"><label>Location <span class="field-hint">(optional)</span></label><input type="text" id="location"></div>
+
+    <button class="btn btn-primary btn-block" type="submit" id="submitBtn">Publish</button>
+  </form>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script>
+let type = new URLSearchParams(location.search).get('type') || 'release';
+
+function applyType(t) {
+  type = t;
+  document.querySelectorAll('#typeSwitch button').forEach(b => b.classList.toggle('btn-primary', b.dataset.type === t));
+  const show = (id, on) => document.getElementById(id).style.display = on ? 'block' : 'none';
+  show('bpmField', t === 'beat');
+  show('keyField', t === 'beat');
+  show('categoryField', t === 'post');
+  show('genreField', t !== 'post');
+  show('locationField', t !== 'post');
+  show('externalField', t !== 'post');
+  document.getElementById('titleLabel').textContent = t === 'beat' ? 'Beat name' : t === 'post' ? 'Post title' : 'Release title';
+  document.getElementById('coverLabel').textContent = t === 'post' ? 'Image' : 'Cover image';
+  document.getElementById('bpm').required = t === 'beat';
+  document.getElementById('key').required = t === 'beat';
+}
+
+document.getElementById('typeSwitch').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (btn) applyType(btn.dataset.type);
+});
+
+(async () => {
+  const ok = await window.UG.requireLogin();
+  if (!ok) return;
+  await UGApp.init();
+  applyType(type);
+})();
+
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('formMsg');
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+  msg.innerHTML = '';
+  try {
+    const coverFile = document.getElementById('coverFile').files[0];
+    const audioFile = document.getElementById('audioFile').files[0];
+    const videoFile = document.getElementById('videoFile').files[0];
+
+    if (type === 'release') {
+      const cover_url = coverFile ? await UGApp.uploadFile('covers', coverFile) : null;
+      const audio_url = audioFile ? await UGApp.uploadFile('audio', audioFile) : null;
+      const video_url = videoFile ? await UGApp.uploadFile('video', videoFile) : null;
+      const { error } = await sb.from('releases').insert({
+        artist_id: window.UG.user.id, title: document.getElementById('title').value.trim(),
+        cover_url, audio_url, video_url,
+        youtube_link: document.getElementById('youtubeLink').value.trim() || null,
+        external_link: document.getElementById('externalLink').value.trim() || null,
+        description: document.getElementById('description').value.trim() || null,
+        genre: document.getElementById('genre').value.trim() || null,
+        location: document.getElementById('location').value.trim() || null
+      });
+      if (error) throw error;
+      window.location.href = 'releases.html';
+    } else if (type === 'beat') {
+      const cover_url = coverFile ? await UGApp.uploadFile('covers', coverFile) : null;
+      const audio_url = audioFile ? await UGApp.uploadFile('audio', audioFile) : null;
+      const video_url = videoFile ? await UGApp.uploadFile('video', videoFile) : null;
+      const { error } = await sb.from('beats').insert({
+        producer_id: window.UG.user.id, name: document.getElementById('title').value.trim(),
+        bpm: parseInt(document.getElementById('bpm').value) || 0,
+        key: document.getElementById('key').value.trim(),
+        cover_url, audio_url, video_url,
+        youtube_link: document.getElementById('youtubeLink').value.trim() || null,
+        external_link: document.getElementById('externalLink').value.trim() || null,
+        description: document.getElementById('description').value.trim() || null,
+        genre: document.getElementById('genre').value.trim() || null,
+        location: document.getElementById('location').value.trim() || null
+      });
+      if (error) throw error;
+      window.location.href = 'beats.html';
+    } else {
+      const image_url = coverFile ? await UGApp.uploadFile('community', coverFile) : null;
+      const audio_url = audioFile ? await UGApp.uploadFile('community', audioFile) : null;
+      const video_url = videoFile ? await UGApp.uploadFile('community', videoFile) : null;
+      const { error } = await sb.from('posts').insert({
+        author_id: window.UG.user.id, title: document.getElementById('title').value.trim(),
+        category: document.getElementById('category').value,
+        content: document.getElementById('description').value.trim() || null,
+        image_url, audio_url, video_url,
+        link: document.getElementById('youtubeLink').value.trim() || document.getElementById('externalLink').value.trim() || null
+      });
+      if (error) throw error;
+      window.location.href = 'community.html';
+    }
+  } catch (err) {
+    msg.innerHTML = `<div class="msg msg-error">${UGApp.escapeHtml(err.message)}</div>`;
+    btn.disabled = false; btn.textContent = 'Publish';
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Join UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+
+<div class="form-card">
+  <h2>Create your UG account</h2>
+  <div id="formMsg"></div>
+  <form id="registerForm">
+    <div class="field">
+      <label>I am a...</label>
+      <div class="account-type-grid" id="typeGrid">
+        <div class="account-type-option selected" data-type="artist">🎤<br>Artist</div>
+        <div class="account-type-option" data-type="producer">🎛<br>Producer</div>
+        <div class="account-type-option" data-type="member">🎧<br>Music Lover</div>
+      </div>
+      <input type="hidden" id="accountType" value="artist">
+    </div>
+    <div class="field"><label>Display name</label><input type="text" id="displayName" required></div>
+    <div class="field"><label>Username</label><input type="text" id="username" required pattern="[a-zA-Z0-9_]+" title="Letters, numbers, underscores only"></div>
+    <div class="field"><label>Email</label><input type="email" id="email" required></div>
+    <div class="field"><label>Password</label><input type="password" id="password" required minlength="6"></div>
+    <button class="btn btn-primary btn-block" type="submit" id="submitBtn">Create account</button>
+  </form>
+  <p style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--text-dim)">
+    Already have an account? <a href="login.html" style="color:var(--accent)">Log in</a>
+  </p>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script>
+UGApp.init();
+
+document.getElementById('typeGrid').addEventListener('click', (e) => {
+  const opt = e.target.closest('.account-type-option');
+  if (!opt) return;
+  document.querySelectorAll('.account-type-option').forEach(o => o.classList.remove('selected'));
+  opt.classList.add('selected');
+  document.getElementById('accountType').value = opt.dataset.type;
+});
+
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('formMsg');
+  const btn = document.getElementById('submitBtn');
+  msg.innerHTML = '';
+  btn.disabled = true; btn.textContent = 'Creating account…';
+
+  const username = document.getElementById('username').value.trim().toLowerCase();
+  const display_name = document.getElementById('displayName').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const account_type = document.getElementById('accountType').value;
+
+  try {
+    // Check username uniqueness up front for a clearer error than the DB constraint
+    const { data: existing } = await sb.from('profiles').select('id').eq('username', username).maybeSingle();
+    if (existing) throw new Error('That username is taken.');
+
+    const { data: signUpData, error: signUpError } = await sb.auth.signUp({ email, password });
+    if (signUpError) throw signUpError;
+
+    const userId = signUpData.user?.id;
+    if (!userId) {
+      msg.innerHTML = `<div class="msg msg-success">Check your email to confirm your account, then log in.</div>`;
+      btn.disabled = false; btn.textContent = 'Create account'; return;
+    }
+
+    const { error: profileError } = await sb.from('profiles').insert({
+      id: userId, username, display_name, account_type
+    });
+    if (profileError) throw profileError;
+
+    window.location.href = 'welcome.html';
+  } catch (err) {
+    msg.innerHTML = `<div class="msg msg-error">${UGApp.escapeHtml(err.message || 'Something went wrong.')}</div>`;
+    btn.disabled = false; btn.textContent = 'Create account';
+  }
+});
+</script>
+</body>
+</html>
