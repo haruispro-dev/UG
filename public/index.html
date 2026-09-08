@@ -2,21 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UNDERGROUND GEO — UG</title>
-<link rel="icon" href="/ug-logo.png">
-<link rel="stylesheet" href="/styles.css">
+<title>UNDERGROUND GEO</title><link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <div class="noise"></div>
-<header class="topbar">
-  <a class="brand" href="#home"><img src="/ug-logo.png"><span>UNDERGROUND<span class="pink"> GEO</span></span></a>
-  <nav id="desktopNav"></nav>
-  <div class="top-actions"><button class="ghost" id="loginBtn">Log in</button><button class="solid" id="registerBtn">Join UG</button><button class="dots" id="menuBtn">•••</button></div>
-</header>
-<div id="menuPanel" class="menu-panel"></div>
-<main id="app"></main>
-<div id="modalRoot"></div>
-<div id="toast"></div>
+<header><a class="brand" href="#home"><img src="/logo.svg" alt="UG"> <span>UNDERGROUND<span class="red">GEO</span></span></a>
+<nav><a href="#artists">Artists</a><a href="#producers">Producers</a><a href="#releases">Releases</a><a href="#beats">Beats</a><a href="#community">Community</a><a href="#resources">Resources</a><a href="#discord">Discord</a></nav>
+<div id="auth"></div><button class="menu" onclick="document.body.classList.toggle('nav-open')">☰</button></header>
+<main>
+<section id="home" class="hero"><div><p class="eyebrow">GEORGIAN MUSIC COMMUNITY</p><h1>MAKE NOISE.<br><span>BUILD UG.</span></h1><p id="heroText">The home of Georgian underground music.</p><div class="actions"><a class="btn redbtn" href="#artists">Explore UG</a><a class="btn ghost" href="#community">Join the community</a></div></div><div class="hero-card"><span>UG / 001</span><strong>Artists.<br>Producers.<br>Music lovers.</strong><i>✦</i></div></section>
+<section id="artists"><div class="section-head"><p class="eyebrow">DISCOVER</p><h2>Artists</h2></div><div id="artistsGrid" class="grid"></div></section>
+<section id="producers"><div class="section-head"><p class="eyebrow">CREATE</p><h2>Producers</h2></div><div id="producersGrid" class="grid"></div></section>
+<section id="releases"><div class="section-head"><p class="eyebrow">LATEST SOUND</p><h2>Releases</h2></div><div id="releasesGrid" class="grid"></div></section>
+<section id="beats"><div class="section-head"><p class="eyebrow">FOR THE NEXT ONE</p><h2>Beats</h2></div><div id="beatsGrid" class="grid"></div></section>
+<section id="community"><div class="section-head"><p class="eyebrow">TALK / SHARE / CONNECT</p><h2>Community</h2></div><div id="postsGrid" class="feed"></div></section>
+<section id="resources"><div class="section-head"><p class="eyebrow">PRODUCTION LIBRARY</p><h2>Plugins / Presets / DAWs</h2></div><p class="muted">Join the UG Discord before downloading resources.</p><div id="resourcesGrid" class="grid"></div></section>
+<section id="discord" class="discord"><p class="eyebrow">THE COMMUNITY</p><h2>Find your people.</h2><a id="discordLink" class="btn redbtn" target="_blank">Join Discord</a></section>
+</main>
+<div id="modal" class="modal hidden"></div>
 <script src="/app.js"></script>
-</body>
-</html>
+</body></html>

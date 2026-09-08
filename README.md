@@ -1,41 +1,29 @@
+# UNDERGROUND GEO
 
-# UNDERGROUND GEO — Finished Standalone Website
-
-This is a real standalone full-stack UG platform. It is not a Replit-only project.
-
-## Included
-- Express backend
-- SQLite database with persistent data
-- Secure password hashing
-- Cookie-based authentication
-- Artist / producer / member accounts
-- Optional YouTube
-- Editable profiles and profile pictures
-- Social links shown only when added
-- Audio, video, cover, and external-link uploads
-- Releases
-- Community posts, comments, reactions
-- Admin panel
-- Category management
-- Discord settings stored in the database
-- Discord CTA on every supported category
-- Uploaded UG logo
-- Responsive custom design
+A new full-stack UG community website.
 
 ## Run locally
-1. Install Node.js 20 or newer.
-2. Open this folder in a terminal.
-3. Run `npm install`
-4. Set secure environment variables:
-   - `ADMIN_EMAIL`
-   - `ADMIN_PASSWORD`
-   - `JWT_SECRET`
-5. Run `npm start`
-6. Open `http://localhost:3000`
 
-The database is created in `data/ug.sqlite`. Uploaded files are stored in `public/uploads`.
+1. Install Node.js 20+.
+2. Copy `.env.example` to `.env`.
+3. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+4. Run:
 
-## Important hosting note
-For permanent production data, use a host with persistent disk/storage or replace SQLite/file uploads with managed PostgreSQL and object storage. Do not use temporary filesystem hosting for important uploads.
+```bash
+npm install
+npm start
+```
 
-Never publish with the default admin password. Change it before deployment.
+Open `http://localhost:3000`.
+
+## Admin panel
+
+Open `/admin`.
+
+The included public app is ready for the main community experience. The admin API is protected by the admin account and supports real resource uploads, deletion, and settings updates. Extend the admin UI in `public/admin.html` if you want a separate visual console.
+
+## Notes
+
+- This is a functional starter implementation with SQLite and local uploads.
+- For production hosting, use persistent disk/storage and a strong session secret.
+- Passwords should be hashed before public deployment; replace the simple demo password handling with bcrypt/argon2.
