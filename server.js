@@ -87,6 +87,7 @@ adminSeed();
 
 app.get("/api/bootstrap",(req,res)=>{
  res.json({user:safeUser(user(req)),settings:settings(),
+ users:db.prepare("SELECT id,username,type,platform,platformLink,pfp,bio,socials FROM users WHERE type<>'admin' ORDER BY id DESC").all(),
  posts:db.prepare("SELECT posts.*,users.username,users.pfp FROM posts LEFT JOIN users ON users.id=posts.userId ORDER BY posts.id DESC").all(),
  releases:db.prepare("SELECT releases.*,users.username FROM releases LEFT JOIN users ON users.id=releases.userId ORDER BY releases.id DESC").all(),
  beats:db.prepare("SELECT beats.*,users.username FROM beats LEFT JOIN users ON users.id=beats.userId ORDER BY beats.id DESC").all(),
@@ -140,5 +141,6 @@ app.post("/api/admin/settings",requireAdmin,(req,res)=>{
  for(const [key,value] of Object.entries(req.body)) db.prepare("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(key,String(value));
  res.json({ok:true});
 });
+app.get("/admin",(req,res)=>res.sendFile(path.join(__dirname,"public","admin.html")));
 app.get("*",(req,res)=>res.sendFile(path.join(__dirname,"public","index.html")));
 app.listen(PORT,()=>console.log(`UG running on port ${PORT}`));
