@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNDERGROUND GEO — Design Preview</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="ug-nav">
+  <div class="ug-nav-inner">
+    <a href="preview.html" class="ug-logo">
+      <img src="assets/logo.png" alt="UG" style="height:34px">
+      UNDERGROUND<span class="tag">GEO</span>
+    </a>
+    <nav class="ug-nav-links">
+      <a href="#" class="active">🔥 Featured</a>
+      <a href="#">🎤 Artists</a>
+      <a href="#">🎛 Producers</a>
+      <a href="#">💿 Releases</a>
+      <a href="#">🎧 Beats</a>
+    </nav>
+    <div class="ug-nav-actions">
+      <button class="ug-dots" id="themeToggle">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v1M12 20v1M4.2 4.2l.7.7M18.4 18.4l.7.7M3 12h1M20 12h1M4.2 19.8l.7-.7M18.4 5.6l.7-.7"/><circle cx="12" cy="12" r="4"/></svg>
+      </button>
+      <button class="ug-dots"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></button>
+      <img src="assets/default-avatar.svg" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border)">
+      <button class="ug-dots"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<section class="hero" data-anim>
+  <h1>UNDERGROUND GEO</h1>
+  <p>The home of the Georgian underground music scene. Discover artists, drop beats, build the community.</p>
+  <div class="hero-actions">
+    <a href="#" class="btn btn-primary">Join the scene</a>
+    <a href="#" class="btn btn-ghost">Explore community</a>
+  </div>
+</section>
+
+<section class="section container" data-anim>
+  <div class="section-head"><div><h2>Featured</h2><div class="sub">Picked by the UG team</div></div></div>
+  <div class="grid">
+    <a class="card" href="#">
+      <div class="card-cover"><img src="assets/default-cover.svg"></div>
+      <div class="card-body"><span class="badge">Release</span><div class="card-title">Zghvis Kide</div><div class="card-sub">Lasha Kajaia</div></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-cover"><img src="assets/default-cover.svg"></div>
+      <div class="card-body"><span class="badge alt">Beat · 140 BPM</span><div class="card-title">Tbilisi Nights</div><div class="card-sub">Nika Beats</div></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-cover"><img src="assets/default-cover.svg"></div>
+      <div class="card-body"><span class="badge">Artist</span><div class="card-title">Mariam K.</div><div class="card-sub">Open to collab</div></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-cover"><img src="assets/default-cover.svg"></div>
+      <div class="card-body"><span class="badge alt">Discussion</span><div class="card-title">Best mixing plugins for trap?</div><div class="card-sub">by giorgi_p · 2h ago</div></div>
+    </a>
+  </div>
+</section>
+
+<section class="section container" data-anim>
+  <div class="section-head"><div><h2>Latest Releases</h2></div></div>
+  <div class="grid">
+    <a class="card" href="#"><div class="card-cover"><img src="assets/default-cover.svg"></div><div class="card-body"><div class="card-title">Mtkvari</div><div class="card-sub">Salome D.</div></div></a>
+    <a class="card" href="#"><div class="card-cover"><img src="assets/default-cover.svg"></div><div class="card-body"><div class="card-title">Kera</div><div class="card-sub">Beka T.</div></div></a>
+    <a class="card" href="#"><div class="card-cover"><img src="assets/default-cover.svg"></div><div class="card-body"><div class="card-title">Chveni</div><div class="card-sub">DJ Vato</div></div></a>
+  </div>
+</section>
+
+<section class="section container" style="max-width:640px" data-anim>
+  <div class="section-head"><h2>Release page player</h2></div>
+  <div style="display:flex;gap:18px;align-items:flex-start">
+    <img src="assets/default-cover.svg" style="width:120px;height:120px;border-radius:8px">
+    <div style="flex:1">
+      <span class="badge">Hip-Hop</span>
+      <h1 style="margin:6px 0 2px;font-size:1.4rem">Zghvis Kide</h1>
+      <a style="color:var(--text-dim)">Lasha Kajaia</a>
+      <div class="player" style="margin-top:16px">
+        <button>▶</button>
+        <div class="bars" id="previewBars"></div>
+      </div>
+      <div style="margin-top:14px"><button class="btn btn-primary btn-sm">♥ 24</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="section container" style="max-width:640px" data-anim>
+  <div class="section-head"><h2>Comments</h2></div>
+  <div class="comment">
+    <div class="comment-head"><img src="assets/default-avatar.svg"><span class="comment-name">nika_beats</span><span class="comment-time">2h ago</span></div>
+    <div class="comment-body">This beat goes crazy 🔥 the drop at 1:20 is insane</div>
+  </div>
+  <div class="comment comment-reply">
+    <div class="comment-head"><img src="assets/default-avatar.svg"><span class="comment-name">lasha.k</span><span class="comment-time">1h ago</span></div>
+    <div class="comment-body">appreciate it bro 🙏</div>
+  </div>
+</section>
+
+<section class="section container" style="max-width:480px" data-anim>
+  <div class="section-head"><h2>Register form</h2></div>
+  <div class="form-card" style="margin:0">
+    <div class="account-type-grid">
+      <div class="account-type-option selected">🎤<br>Artist</div>
+      <div class="account-type-option">🎛<br>Producer</div>
+      <div class="account-type-option">🎧<br>Music Lover</div>
+    </div>
+    <div class="field" style="margin-top:16px"><label>Display name</label><input placeholder="Your artist name"></div>
+    <div class="field"><label>Email</label><input placeholder="you@example.com"></div>
+    <button class="btn btn-primary btn-block">Create account</button>
+  </div>
+</section>
+
+<footer class="ug-footer"><div class="container"><p>UNDERGROUND GEO — built by the scene, for the scene.</p></div></footer>
+
+<script src="js/hud.js"></script>
+<script>
+document.getElementById('previewBars').innerHTML = Array.from({length:22}).map(()=>`<span style="height:${6+Math.random()*14|0}px"></span>`).join('');
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+});
+document.querySelectorAll('.account-type-option').forEach(o => o.addEventListener('click', () => {
+  document.querySelectorAll('.account-type-option').forEach(x=>x.classList.remove('selected'));
+  o.classList.add('selected');
+}));
+new IntersectionObserver((entries)=>entries.forEach(e=>e.isIntersecting&&e.target.classList.add('in-view')),{threshold:.1})
+  .observe ? document.querySelectorAll('[data-anim]').forEach(el=>{
+    const io = new IntersectionObserver((entries)=>entries.forEach(e=>e.isIntersecting&&e.target.classList.add('in-view')),{threshold:.1});
+    io.observe(el);
+  }) : null;
+</script>
+</body>
+</html>

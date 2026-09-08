@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+
+<div class="form-card">
+  <h2>Welcome back</h2>
+  <div id="formMsg"></div>
+  <form id="loginForm">
+    <div class="field"><label>Email or username</label><input type="text" id="identifier" required></div>
+    <div class="field"><label>Password</label><input type="password" id="password" required></div>
+    <button class="btn btn-primary btn-block" type="submit" id="submitBtn">Log in</button>
+  </form>
+  <p style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--text-dim)">
+    New here? <a href="register.html" style="color:var(--accent)">Create an account</a>
+  </p>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/hud.js"></script>
+<script>
+UGApp.init();
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('formMsg');
+  const btn = document.getElementById('submitBtn');
+  msg.innerHTML = ''; btn.disabled = true; btn.textContent = 'Logging in…';
+
+  let identifier = document.getElementById('identifier').value.trim();
+  const password = document.getElementById('password').value;
+
+  try {
+    if (!identifier.includes('@')) {
+      const { data: email, error: lookupErr } = await sb.rpc('email_for_username', { uname: identifier.toLowerCase() });
+      if (lookupErr || !email) throw new Error('No account found with that username.');
+      identifier = email;
+    }
+    const { error } = await sb.auth.signInWithPassword({ email: identifier, password });
+    if (error) throw error;
+
+    const params = new URLSearchParams(window.location.search);
+    window.location.href = params.get('next') || 'index.html';
+  } catch (err) {
+    msg.innerHTML = `<div class="msg msg-error">${UGApp.escapeHtml(err.message || 'Login failed.')}</div>`;
+    btn.disabled = false; btn.textContent = 'Log in';
+  }
+});
+</script>
+</body>
+</html>

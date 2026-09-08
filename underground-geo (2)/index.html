@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNDERGROUND GEO — Georgian Music Community</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+
+<main id="homeContent">
+  <div class="empty-state"><div class="spinner"></div><p>Loading UG…</p></div>
+</main>
+
+<footer class="ug-footer">
+  <div class="container">
+    <p id="footerTagline">UNDERGROUND GEO — built by the scene, for the scene.</p>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/hud.js"></script>
+<script>
+async function loadHome() {
+  await UGApp.init('featured');
+
+  const { data: settings } = await sb.from('site_settings').select('*').single();
+  const { data: sections } = await sb.from('homepage_sections').select('*').eq('enabled', true).order('order_index');
+
+  const main = document.getElementById('homeContent');
+  main.innerHTML = '';
+
+  for (const section of (sections || [])) {
+    main.insertAdjacentHTML('beforeend', await renderSection(section, settings));
+  }
+  UGApp.observeSections();
+}
+
+async function renderSection(section, settings) {
+  if (section.section_type === 'banner') {
+    return `
+      <section class="hero" data-anim>
+        <h1>${settings?.homepage_hero_title || 'UNDERGROUND GEO'}</h1>
+        <p>${settings?.homepage_hero_subtitle || ''}</p>
+        <div class="hero-actions">
+          <a href="register.html" class="btn btn-primary">Join the scene</a>
+          <a href="community.html" class="btn btn-ghost">Explore community</a>
+        </div>
+      </section>`;
+  }
+
+  let items = [];
+  let cardRenderer = renderGenericCard;
+
+  if (section.section_type === 'latest_releases') {
+    const { data } = await sb.from('releases').select('*, profiles:artist_id(username, display_name)').order('created_at', { ascending: false }).limit(section.item_limit || 6);
+    items = data || []; cardRenderer = renderReleaseCard;
+  } else if (section.section_type === 'latest_beats') {
+    const { data } = await sb.from('beats').select('*, profiles:producer_id(username, display_name)').order('created_at', { ascending: false }).limit(section.item_limit || 6);
+    items = data || []; cardRenderer = renderBeatCard;
+  } else if (section.section_type === 'registered') {
+    const { data } = await sb.from('profiles').select('*').in('account_type', ['artist','producer']).order('created_at', { ascending: false }).limit(section.item_limit || 8);
+    items = data || []; cardRenderer = renderProfileCard;
+  } else if (section.section_type === 'community') {
+    const { data } = await sb.from('posts').select('*, profiles:author_id(username, display_name, avatar_url)').order('created_at', { ascending: false }).limit(section.item_limit || 4);
+    items = data || []; cardRenderer = renderPostCard;
+  } else if (section.section_type === 'featured') {
+    const [{ data: fr }, { data: fb }, { data: fp }] = await Promise.all([
+      sb.from('releases').select('*, profiles:artist_id(username, display_name)').eq('featured', true).limit(4),
+      sb.from('beats').select('*, profiles:producer_id(username, display_name)').eq('featured', true).limit(4),
+      sb.from('posts').select('*, profiles:author_id(username, display_name, avatar_url)').eq('featured', true).limit(4)
+    ]);
+    items = [...(fr||[]).map(x=>({...x,_kind:'release'})), ...(fb||[]).map(x=>({...x,_kind:'beat'})), ...(fp||[]).map(x=>({...x,_kind:'post'}))];
+    cardRenderer = (i) => i._kind === 'release' ? renderReleaseCard(i) : i._kind === 'beat' ? renderBeatCard(i) : renderPostCard(i);
+  }
+
+  if (!items.length) {
+    return `<section class="section container" data-anim>
+      <div class="section-head"><div><h2>${section.title}</h2><div class="sub">${section.description||''}</div></div></div>
+      <div class="empty-state">Nothing here yet — be the first to add something.</div>
+    </section>`;
+  }
+
+  return `<section class="section container" data-anim>
+    <div class="section-head"><div><h2>${section.title}</h2><div class="sub">${section.description||''}</div></div></div>
+    <div class="grid">${items.map(cardRenderer).join('')}</div>
+  </section>`;
+}
+
+function renderReleaseCard(r) {
+  return `<a class="card" href="release.html?id=${r.id}">
+    <div class="card-cover"><img src="${r.cover_url || 'assets/default-cover.svg'}" onerror="this.src='assets/default-cover.svg'"></div>
+    <div class="card-body">
+      <span class="badge">Release</span>
+      <div class="card-title">${UGApp.escapeHtml(r.title)}</div>
+      <div class="card-sub">${UGApp.escapeHtml(r.profiles?.display_name || 'Unknown artist')}</div>
+    </div>
+  </a>`;
+}
+function renderBeatCard(b) {
+  return `<a class="card" href="beat.html?id=${b.id}">
+    <div class="card-cover"><img src="${b.cover_url || 'assets/default-cover.svg'}" onerror="this.src='assets/default-cover.svg'"></div>
+    <div class="card-body">
+      <span class="badge alt">Beat · ${b.bpm} BPM</span>
+      <div class="card-title">${UGApp.escapeHtml(b.name)}</div>
+      <div class="card-sub">${UGApp.escapeHtml(b.profiles?.display_name || 'Unknown producer')}</div>
+    </div>
+  </a>`;
+}
+function renderProfileCard(p) {
+  return `<a class="card" href="profile.html?u=${p.username}">
+    <div class="card-cover"><img src="${p.avatar_url || 'assets/default-avatar.svg'}" onerror="this.src='assets/default-avatar.svg'"></div>
+    <div class="card-body">
+      <span class="badge">${p.account_type}</span>
+      <div class="card-title">${UGApp.escapeHtml(p.display_name)}</div>
+      <div class="card-sub">${UGApp.escapeHtml((p.bio||'').slice(0,60))}</div>
+    </div>
+  </a>`;
+}
+function renderPostCard(p) {
+  return `<a class="card" href="post.html?id=${p.id}">
+    <div class="card-body">
+      <span class="badge alt">${p.category || 'discussion'}</span>
+      <div class="card-title">${UGApp.escapeHtml(p.title)}</div>
+      <div class="card-sub">by ${UGApp.escapeHtml(p.profiles?.display_name || 'Member')} · ${UGApp.timeAgo(p.created_at)}</div>
+    </div>
+  </a>`;
+}
+function renderGenericCard(i){ return renderPostCard(i); }
+
+loadHome();
+</script>
+</body>
+</html>
