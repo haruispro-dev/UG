@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resources — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+<div class="container" style="padding-top:30px">
+  <div class="section-head">
+    <div><h1>Plugins, Presets & DAWs</h1><div class="sub">Free production resources for the UG community.</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm filter-btn active" data-c="all">All</button>
+      <button class="btn btn-ghost btn-sm filter-btn" data-c="plugin">Plugins</button>
+      <button class="btn btn-ghost btn-sm filter-btn" data-c="preset">Presets</button>
+      <button class="btn btn-ghost btn-sm filter-btn" data-c="daw">DAWs</button>
+    </div>
+  </div>
+  <div class="grid" id="grid"><div class="empty-state"><div class="spinner"></div></div></div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/hud.js"></script>
+<script>
+let all = [];
+async function load() {
+  await UGApp.init(new URLSearchParams(location.search).get('cat') === 'plugin' ? 'plugins' : new URLSearchParams(location.search).get('cat') === 'preset' ? 'presets' : new URLSearchParams(location.search).get('cat') === 'daw' ? 'daws' : 'plugins');
+  const { data } = await sb.from('resources').select('*').order('created_at', { ascending:false });
+  all = data || [];
+  const initial = new URLSearchParams(location.search).get('cat') || 'all';
+  render(initial);
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.c === initial));
+}
+function render(cat) {
+  const grid = document.getElementById('grid');
+  const list = cat === 'all' ? all : all.filter(r => r.category === cat);
+  if (!list.length) { grid.innerHTML = '<div class="empty-state">Nothing here yet.</div>'; return; }
+  grid.innerHTML = list.map(r => `
+    <div class="card">
+      <div class="card-cover"><img src="${r.preview_image_url || 'assets/default-cover.svg'}"></div>
+      <div class="card-body">
+        <span class="badge">${r.category}${r.version ? ' · v'+UGApp.escapeHtml(r.version) : ''}</span>
+        <div class="card-title">${UGApp.escapeHtml(r.name)}</div>
+        <div class="card-sub">${UGApp.escapeHtml(r.description || '')}</div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%" onclick="download('${r.id}')">Download</button>
+      </div>
+    </div>`).join('');
+}
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render(btn.dataset.c);
+});
+
+async function download(id) {
+  if (!window.UG.user) { window.location.href = 'login.html'; return; }
+  const resource = all.find(r => r.id === id);
+  if (resource.discord_gated && !window.UG.profile?.discord_verified) {
+    const { data: settings } = await sb.from('site_settings').select('discord_invite_link').single();
+    const link = settings?.discord_invite_link || window.UG_CONFIG.DISCORD_INVITE_FALLBACK;
+    if (confirm('This download requires joining the UG Discord first. Open the invite now?')) {
+      window.open(link, '_blank');
+    }
+    return;
+  }
+  window.open(resource.file_url, '_blank');
+}
+load();
+</script>
+</body>
+</html>

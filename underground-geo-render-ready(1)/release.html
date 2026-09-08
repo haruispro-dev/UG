@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Release — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+<div class="container" style="max-width:760px;padding:30px 20px 80px" id="root">
+  <div class="empty-state"><div class="spinner"></div></div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/hud.js"></script>
+<script>
+async function load() {
+  await UGApp.init('releases');
+  const id = new URLSearchParams(location.search).get('id');
+  const { data: r } = await sb.from('releases').select('*, profiles:artist_id(username, display_name, avatar_url)').eq('id', id).single();
+  const root = document.getElementById('root');
+  if (!r) { root.innerHTML = '<div class="empty-state">Release not found.</div>'; return; }
+
+  root.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="display:flex;gap:18px">
+        <img src="${r.cover_url || 'assets/default-cover.svg'}" style="width:140px;height:140px;border-radius:8px;object-fit:cover">
+        <div>
+          <span class="badge">${UGApp.escapeHtml(r.genre || 'Release')}</span>
+          <h1 style="margin:6px 0 2px">${UGApp.escapeHtml(r.title)}</h1>
+          <a href="profile.html?u=${r.profiles?.username}" style="color:var(--text-dim)">${UGApp.escapeHtml(r.profiles?.display_name||'')}</a>
+        </div>
+      </div>
+      <div id="menuHolder"></div>
+    </div>
+
+    ${r.description ? `<p style="margin-top:20px">${UGApp.escapeHtml(r.description)}</p>` : ''}
+
+    ${r.audio_url ? `<div class="player" style="margin-top:20px"><audio controls style="width:100%"><source src="${r.audio_url}"></audio></div>` : ''}
+    ${r.video_url ? `<video controls style="width:100%;border-radius:8px;margin-top:16px"><source src="${r.video_url}"></video>` : ''}
+    ${r.youtube_link ? `<div style="margin-top:16px"><a class="btn btn-ghost btn-sm" href="${r.youtube_link}" target="_blank">Watch on YouTube</a></div>` : ''}
+    ${r.external_link ? `<div style="margin-top:10px"><a class="btn btn-ghost btn-sm" href="${r.external_link}" target="_blank">External link</a></div>` : ''}
+
+    <div style="margin-top:20px" id="likeHolder"></div>
+    <h3 style="margin-top:30px">Comments</h3>
+    <div id="commentsHolder"></div>
+  `;
+  document.getElementById('menuHolder').innerHTML = UGApp.contentMenu('release', r.id, r.artist_id, location.href);
+  UGApp.renderLikeButton('likeHolder', 'release', r.id);
+  UGApp.renderComments('commentsHolder', 'release', r.id);
+}
+load();
+</script>
+</body>
+</html>

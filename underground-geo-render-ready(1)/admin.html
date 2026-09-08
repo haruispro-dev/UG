@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="admin-side">
+    <h3 style="font-family:var(--font-display)">UG ADMIN</h3>
+    <a href="#" data-tab="overview" class="tab-link active">Overview</a>
+    <a href="#" data-tab="users">Users</a>
+    <a href="#" data-tab="releases">Releases</a>
+    <a href="#" data-tab="beats">Beats</a>
+    <a href="#" data-tab="posts">Community Posts</a>
+    <a href="#" data-tab="reports">Reports</a>
+    <a href="#" data-tab="collab">Collab Requests</a>
+    <a href="#" data-tab="resources">Resources</a>
+    <a href="#" data-tab="categories">Categories & Nav</a>
+    <a href="#" data-tab="homepage">Homepage Sections</a>
+    <a href="#" data-tab="settings">Settings</a>
+    <a href="index.html" style="margin-top:20px;color:var(--text-dim)">← Back to site</a>
+    <a href="#" id="logoutBtn" style="color:var(--danger)">Logout</a>
+  </aside>
+  <main class="admin-main" id="adminMain">
+    <div class="empty-state"><div class="spinner"></div></div>
+  </main>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

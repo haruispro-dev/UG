@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+<div class="container" style="max-width:700px;padding:30px 20px 80px" id="root">
+  <div class="empty-state"><div class="spinner"></div></div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/hud.js"></script>
+<script>
+async function load() {
+  await UGApp.init('community');
+  const id = new URLSearchParams(location.search).get('id');
+  const { data: p } = await sb.from('posts').select('*, profiles:author_id(username, display_name, avatar_url)').eq('id', id).single();
+  const root = document.getElementById('root');
+  if (!p) { root.innerHTML = '<div class="empty-state">Post not found.</div>'; return; }
+
+  root.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="${p.profiles?.avatar_url || 'assets/default-avatar.svg'}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">
+        <div>
+          <a href="profile.html?u=${p.profiles?.username}" style="font-weight:600">${UGApp.escapeHtml(p.profiles?.display_name||'')}</a>
+          <div class="comment-time">${UGApp.timeAgo(p.created_at)} · <span class="badge alt">${p.category}</span></div>
+        </div>
+      </div>
+      <div id="menuHolder"></div>
+    </div>
+    <h1 style="margin-top:18px">${UGApp.escapeHtml(p.title)}</h1>
+    ${p.content ? `<p>${UGApp.escapeHtml(p.content)}</p>` : ''}
+    ${p.image_url ? `<img src="${p.image_url}" style="width:100%;border-radius:8px;margin:12px 0">` : ''}
+    ${p.audio_url ? `<div class="player"><audio controls style="width:100%"><source src="${p.audio_url}"></audio></div>` : ''}
+    ${p.video_url ? `<video controls style="width:100%;border-radius:8px"><source src="${p.video_url}"></video>` : ''}
+    ${p.link ? `<a class="btn btn-ghost btn-sm" href="${p.link}" target="_blank" style="margin-top:8px">Open link</a>` : ''}
+
+    <div style="margin-top:16px" id="likeHolder"></div>
+    <h3 style="margin-top:26px">Comments</h3>
+    <div id="commentsHolder"></div>
+  `;
+  document.getElementById('menuHolder').innerHTML = UGApp.contentMenu('post', p.id, p.author_id, location.href);
+  UGApp.renderLikeButton('likeHolder', 'post', p.id);
+  UGApp.renderComments('commentsHolder', 'post', p.id);
+}
+load();
+</script>
+</body>
+</html>

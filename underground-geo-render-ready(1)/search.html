@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+<div class="container" style="padding-top:30px">
+  <div class="field" style="max-width:420px">
+    <input id="searchInput" type="text" placeholder="Search artists, producers, releases, beats…">
+  </div>
+  <div id="results" style="margin-top:20px"><div class="empty-state"><div class="spinner"></div></div></div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/hud.js"></script>
+<script>
+async function search(q) {
+  const results = document.getElementById('results');
+  if (!q) { results.innerHTML = '<div class="empty-state">Type something to search.</div>'; return; }
+  const like = `%${q}%`;
+  const [{ data: profiles }, { data: releases }, { data: beats }] = await Promise.all([
+    sb.from('profiles').select('*').or(`display_name.ilike.${like},username.ilike.${like}`).limit(12),
+    sb.from('releases').select('*, profiles:artist_id(username,display_name)').ilike('title', like).limit(12),
+    sb.from('beats').select('*, profiles:producer_id(username,display_name)').ilike('name', like).limit(12)
+  ]);
+  const sections = [
+    ['People', profiles, p => `<a class="card" href="profile.html?u=${p.username}"><div class="card-cover"><img src="${p.avatar_url||'assets/default-avatar.svg'}"></div><div class="card-body"><span class="badge">${p.account_type}</span><div class="card-title">${UGApp.escapeHtml(p.display_name)}</div></div></a>`],
+    ['Releases', releases, r => `<a class="card" href="release.html?id=${r.id}"><div class="card-cover"><img src="${r.cover_url||'assets/default-cover.svg'}"></div><div class="card-body"><div class="card-title">${UGApp.escapeHtml(r.title)}</div><div class="card-sub">${UGApp.escapeHtml(r.profiles?.display_name||'')}</div></div></a>`],
+    ['Beats', beats, b => `<a class="card" href="beat.html?id=${b.id}"><div class="card-cover"><img src="${b.cover_url||'assets/default-cover.svg'}"></div><div class="card-body"><div class="card-title">${UGApp.escapeHtml(b.name)}</div><div class="card-sub">${UGApp.escapeHtml(b.profiles?.display_name||'')}</div></div></a>`]
+  ];
+  const html = sections.filter(([,items]) => items && items.length).map(([title,items,render]) => `
+    <section class="section"><div class="section-head"><h2>${title}</h2></div><div class="grid">${items.map(render).join('')}</div></section>`).join('');
+  results.innerHTML = html || `<div class="empty-state">No results for "${UGApp.escapeHtml(q)}".</div>`;
+}
+(async () => {
+  await UGApp.init();
+  const q = new URLSearchParams(location.search).get('q') || '';
+  document.getElementById('searchInput').value = q;
+  search(q);
+  let t;
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const val = e.target.value.trim();
+      history.replaceState(null, '', 'search.html?q=' + encodeURIComponent(val));
+      search(val);
+    }, 350);
+  });
+})();
+</script>
+</body>
+</html>

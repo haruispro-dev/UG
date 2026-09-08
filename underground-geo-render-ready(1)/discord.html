@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discord — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+
+<div class="container" style="max-width:560px;padding:60px 20px;text-align:center">
+  <h1>Join the UG Discord</h1>
+  <p style="color:var(--text-dim)" id="statusText">The UG Discord is where releases drop first, feedback happens live, and gated resources live.</p>
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
+    <a class="btn btn-primary" id="inviteBtn" target="_blank">Open Discord invite</a>
+    <button class="btn btn-ghost" id="verifyBtn">Verify my membership</button>
+  </div>
+  <p class="field-hint" style="margin-top:16px" id="verifiedNote"></p>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/hud.js"></script>
+<script>
+async function load() {
+  await UGApp.init('discord');
+  const { data: settings } = await sb.from('site_settings').select('discord_invite_link, discord_guild_id').single();
+  document.getElementById('inviteBtn').href = settings?.discord_invite_link || window.UG_CONFIG.DISCORD_INVITE_FALLBACK;
+
+  if (window.UG.profile?.discord_verified) {
+    document.getElementById('verifiedNote').innerHTML = '✅ Your Discord membership is verified — gated downloads are unlocked.';
+    document.getElementById('verifyBtn').style.display = 'none';
+  }
+
+  // Returning from Discord OAuth redirect: check guild membership using the provider token
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.provider_token && window.UG.user) {
+    try {
+      const res = await fetch('https://discord.com/api/users/@me/guilds', {
+        headers: { Authorization: `Bearer ${session.provider_token}` }
+      });
+      const guilds = await res.json();
+      const isMember = Array.isArray(guilds) && settings?.discord_guild_id && guilds.some(g => g.id === settings.discord_guild_id);
+      if (isMember) {
+        await sb.from('profiles').update({ discord_verified: true }).eq('id', window.UG.user.id);
+        document.getElementById('verifiedNote').innerHTML = '✅ Verified! You can now download gated resources.';
+        document.getElementById('verifyBtn').style.display = 'none';
+      } else {
+        document.getElementById('verifiedNote').innerHTML = 'We could not find you in the UG Discord yet. Join above, then verify again.';
+      }
+    } catch (e) {
+      document.getElementById('verifiedNote').textContent = 'Could not check Discord membership right now.';
+    }
+  }
+}
+
+document.getElementById('verifyBtn').addEventListener('click', async () => {
+  if (!window.UG.user) { window.location.href = 'login.html'; return; }
+  await sb.auth.signInWithOAuth({
+    provider: 'discord',
+    options: { scopes: 'identify guilds', redirectTo: window.location.href }
+  });
+});
+
+load();
+</script>
+</body>
+</html>

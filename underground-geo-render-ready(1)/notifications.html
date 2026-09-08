@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications — UNDERGROUND GEO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="ug-nav" id="ugNav"></header>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+<div class="mobile-panel" id="mobilePanel"></div>
+
+<div class="container" style="max-width:640px;padding:30px 20px 80px">
+  <h1>Notifications</h1>
+  <div id="notifList"><div class="empty-state"><div class="spinner"></div></div></div>
+
+  <h2 style="margin-top:40px">Collaboration & contact requests</h2>
+  <div id="requestList"></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/hud.js"></script>
+<script>
+async function load() {
+  const ok = await window.UG.requireLogin();
+  if (!ok) return;
+  await UGApp.init();
+
+  const { data: notifs } = await sb.from('notifications').select('*').eq('user_id', window.UG.user.id).order('created_at', { ascending:false });
+  document.getElementById('notifList').innerHTML = notifs?.length ? notifs.map(n => `
+    <div class="comment"><a href="${n.link || '#'}">${UGApp.escapeHtml(n.message)}</a> <span class="comment-time">${UGApp.timeAgo(n.created_at)}</span></div>
+  `).join('') : '<div class="empty-state">No notifications yet.</div>';
+
+  const { data: reqs } = await sb.from('collab_requests').select('*, profiles:sender_id(username, display_name)').eq('receiver_id', window.UG.user.id).order('created_at', { ascending:false });
+  const el = document.getElementById('requestList');
+  if (!reqs?.length) { el.innerHTML = '<div class="empty-state">No requests yet.</div>'; return; }
+  el.innerHTML = reqs.map(r => `
+    <div class="comment" data-id="${r.id}">
+      <b>${UGApp.escapeHtml(r.profiles?.display_name||'Someone')}</b> sent a ${r.kind === 'collab' ? 'collaboration request' : 'message'}: "${UGApp.escapeHtml(r.message||'')}"
+      <div class="comment-time">${UGApp.timeAgo(r.created_at)} · status: ${r.status}</div>
+      ${r.status === 'pending' ? `
+        <div style="margin-top:6px;display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="respond('${r.id}','accepted')">Accept</button>
+          <button class="btn btn-ghost btn-sm" onclick="respond('${r.id}','declined')">Decline</button>
+        </div>` : ''}
+    </div>`).join('');
+}
+async function respond(id, status) {
+  await sb.from('collab_requests').update({ status }).eq('id', id);
+  load();
+}
+load();
+</script>
+</body>
+</html>
